@@ -1,0 +1,2282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- This viewport tag makes the app fit the phone screen properly -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <!-- PWA meta tags - these tell the browser this is an installable app -->
+  <meta name="theme-color" content="#002244">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.json">
+  <title>Fertility Tracker</title>
+
+<style>
+/* ============================================================
+   CSS STYLES - All the visual styling for the app
+   Color scheme: Seahawks-inspired (navy, green, grey)
+   ============================================================ */
+
+/* Reset default browser styles so everything looks consistent */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Seahawks color palette */
+  --navy: #002244;
+  --navy-light: #003366;
+  --green: #69BE28;
+  --green-dark: #4a8a1c;
+  --grey: #A5ACAF;
+  --grey-light: #E8EAEB;
+  --white: #FFFFFF;
+  --coral: #E86B6B;
+  --coral-light: #FDEAEA;
+  --yellow: #F5A623;
+  --blue-light: #E3F2FD;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--grey-light);
+  color: #333;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior: none;
+  /* Add padding at bottom for the nav bar */
+  padding-bottom: 70px;
+}
+
+/* ---- HEADER ---- */
+.header {
+  background: var(--navy);
+  color: var(--white);
+  padding: 16px 20px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  color: var(--green);
+  margin-top: 2px;
+}
+
+/* ---- BOTTOM NAVIGATION ---- */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--navy);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 12px;
+  z-index: 100;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.2);
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--grey);
+  font-size: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.2s;
+}
+
+.nav-btn.active {
+  color: var(--green);
+}
+
+.nav-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ---- PAGE SECTIONS ---- */
+/* Each "page" is a div that gets shown/hidden */
+.page {
+  display: none;
+  padding: 16px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.page.active {
+  display: block;
+}
+
+/* ---- CARDS ---- */
+/* Cards are the white boxes that contain content */
+.card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ---- FORM ELEMENTS ---- */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--grey-light);
+  border-radius: 8px;
+  font-size: 16px; /* 16px prevents iOS zoom on focus */
+  background: var(--white);
+  color: #333;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* Toggle switch for period yes/no */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.toggle-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.toggle {
+  position: relative;
+  width: 50px;
+  height: 28px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--grey);
+  border-radius: 28px;
+  transition: 0.3s;
+}
+
+.toggle-slider:before {
+  content: "";
+  position: absolute;
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.toggle input:checked + .toggle-slider {
+  background: var(--green);
+}
+
+.toggle input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+/* ---- BUTTONS ---- */
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--green);
+  color: var(--white);
+}
+
+.btn-secondary {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.btn-danger {
+  background: var(--coral);
+  color: var(--white);
+}
+
+.btn-small {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+/* ---- DASHBOARD SPECIFIC ---- */
+.dash-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--grey-light);
+}
+
+.dash-stat:last-child {
+  border-bottom: none;
+}
+
+.dash-stat-label {
+  font-size: 13px;
+  color: #777;
+}
+
+.dash-stat-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.phase-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.phase-menstrual { background: var(--coral); }
+.phase-follicular { background: var(--navy-light); }
+.phase-ovulation { background: var(--green); }
+.phase-luteal { background: var(--yellow); }
+.phase-pregnant { background: #9C27B0; }
+
+.confidence-note {
+  font-size: 11px;
+  color: var(--grey);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* ---- FERTILITY WINDOW BANNER ---- */
+.fertility-banner {
+  background: linear-gradient(135deg, var(--green), var(--green-dark));
+  color: var(--white);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.fertility-banner.inactive {
+  background: var(--grey-light);
+  color: #777;
+}
+
+.fertility-banner h3 {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.fertility-banner p {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* ---- PREGNANCY MODE BANNER ---- */
+.pregnancy-banner {
+  background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+  color: var(--white);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.pregnancy-banner h3 {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.pregnancy-banner p {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* ---- CHART ---- */
+.chart-container {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  overflow-x: auto;
+}
+
+.chart-container canvas {
+  width: 100%;
+  height: 280px;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 11px;
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chart-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ---- CYCLE HISTORY ---- */
+.cycle-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--grey-light);
+  cursor: pointer;
+}
+
+.cycle-item:last-child {
+  border-bottom: none;
+}
+
+.cycle-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cycle-item-date {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.cycle-item-length {
+  font-size: 13px;
+  color: var(--grey);
+}
+
+.cycle-item-type {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+.type-normal { background: var(--blue-light); color: var(--navy); }
+.type-recovery { background: #FFF3E0; color: #E65100; }
+.type-miscarriage { background: var(--coral-light); color: var(--coral); }
+.type-abortion { background: var(--coral-light); color: var(--coral); }
+.type-pregnancy { background: #F3E5F5; color: #9C27B0; }
+
+.cycle-item-details {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #777;
+}
+
+/* ---- HISTORICAL DATA ENTRY ---- */
+.historical-list {
+  margin-top: 8px;
+}
+
+.historical-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--grey-light);
+  font-size: 14px;
+}
+
+.historical-item .remove-btn {
+  background: none;
+  border: none;
+  color: var(--coral);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 4px;
+}
+
+/* ---- TOAST NOTIFICATION ---- */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy);
+  color: var(--white);
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+/* ---- EMPTY STATE ---- */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--grey);
+}
+
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  font-size: 14px;
+}
+
+/* ---- MISC ---- */
+.text-center { text-align: center; }
+.text-green { color: var(--green); }
+.text-coral { color: var(--coral); }
+.text-grey { color: var(--grey); }
+.text-navy { color: var(--navy); }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mb-8 { margin-bottom: 8px; }
+.hidden { display: none !important; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+/* ---- ONBOARDING OVERLAY ---- */
+.onboarding {
+  position: fixed;
+  inset: 0;
+  background: var(--navy);
+  color: var(--white);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.onboarding h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.onboarding p {
+  font-size: 14px;
+  color: var(--grey);
+  margin-bottom: 24px;
+  max-width: 320px;
+}
+
+.onboarding .form-group label {
+  color: var(--grey);
+}
+
+.onboarding .form-group input,
+.onboarding .form-group select {
+  background: var(--navy-light);
+  border-color: #445566;
+  color: var(--white);
+}
+
+.onboarding .btn {
+  max-width: 320px;
+}
+
+/* Cycle selector for chart page */
+.cycle-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.cycle-selector button {
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.cycle-selector span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+/* Pregnancy outcome buttons */
+.pregnancy-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pregnancy-actions .btn {
+  flex: 1;
+  padding: 10px 8px;
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<div class="header">
+  <h1>Fertility Tracker</h1>
+  <div class="header-subtitle" id="headerSubtitle">Track · Predict · Know</div>
+</div>
+
+<!-- ============================================================
+     ONBOARDING - Shows on first launch to get basic setup info
+     ============================================================ -->
+<div class="onboarding" id="onboarding">
+  <h2>Welcome</h2>
+  <p>Let's set up your tracker. Just a couple quick questions to get started.</p>
+  <div style="width: 100%; max-width: 320px;">
+    <div class="form-group">
+      <label>First day of your last period</label>
+      <input type="date" id="onboardLastPeriod">
+    </div>
+    <div class="form-group">
+      <label>Your typical cycle length (days)</label>
+      <input type="number" id="onboardCycleLength" value="28" min="18" max="60">
+    </div>
+    <div class="form-group">
+      <label>Are your cycles regular?</label>
+      <select id="onboardRegularity">
+        <option value="regular">Regular (pretty consistent)</option>
+        <option value="somewhat">Somewhat irregular (varies a bit)</option>
+        <option value="irregular">Irregular (varies a lot)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Temperature unit</label>
+      <select id="onboardTempUnit">
+        <option value="F">°F (Fahrenheit)</option>
+        <option value="C">°C (Celsius)</option>
+      </select>
+    </div>
+    <button class="btn btn-primary mt-12" onclick="completeOnboarding()">Get Started</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: DASHBOARD
+     ============================================================ -->
+<div class="page" id="pageDashboard">
+  <!-- Pregnancy banner (hidden unless in pregnancy mode) -->
+  <div class="pregnancy-banner hidden" id="pregnancyBanner">
+    <h3 id="pregnancyWeeks">Pregnancy Mode</h3>
+    <p id="pregnancyInfo">Tracking active pregnancy</p>
+    <div class="pregnancy-actions">
+      <button class="btn btn-small" style="background:rgba(255,255,255,0.2);color:#fff" onclick="logPregnancyOutcome('miscarriage')">Log Miscarriage</button>
+      <button class="btn btn-small" style="background:rgba(255,255,255,0.2);color:#fff" onclick="logPregnancyOutcome('abortion')">Log Abortion</button>
+    </div>
+  </div>
+
+  <!-- Fertility window banner -->
+  <div class="fertility-banner" id="fertilityBanner">
+    <h3 id="fertilityBannerTitle">Fertility Window</h3>
+    <p id="fertilityBannerText">Loading...</p>
+  </div>
+
+  <!-- Cycle stats card -->
+  <div class="card">
+    <div class="card-title">Current Cycle</div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Cycle Day</span>
+      <span class="dash-stat-value" id="dashCycleDay">—</span>
+    </div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Phase</span>
+      <span id="dashPhase"><span class="phase-badge phase-follicular">—</span></span>
+    </div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Predicted Ovulation</span>
+      <span class="dash-stat-value" id="dashOvulation">—</span>
+    </div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Fertility Window</span>
+      <span class="dash-stat-value" id="dashFertility">—</span>
+    </div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Next Period</span>
+      <span class="dash-stat-value" id="dashNextPeriod">—</span>
+    </div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Cycle Regularity</span>
+      <span class="dash-stat-value" id="dashRegularity">—</span>
+    </div>
+    <div class="confidence-note" id="dashConfidence"></div>
+  </div>
+
+  <!-- Today's entry summary -->
+  <div class="card">
+    <div class="card-title">Today's Entry</div>
+    <div id="dashTodayEntry">
+      <p class="text-grey" style="font-size:13px;">No entry for today yet.</p>
+      <button class="btn btn-primary btn-small mt-8" onclick="navigateTo('log')">Log Today</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: LOG ENTRY
+     ============================================================ -->
+<div class="page" id="pageLog">
+  <div class="card">
+    <div class="card-title">Daily Entry</div>
+
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="logDate">
+    </div>
+
+    <div class="form-group">
+      <label>Basal Body Temperature (<span id="logTempUnitLabel">°F</span>)</label>
+      <input type="number" id="logBBT" step="0.01" placeholder="e.g. 97.8">
+    </div>
+
+    <div class="form-group">
+      <label>Ovulation Test (OPK) Result</label>
+      <select id="logOPK">
+        <option value="">— Not tested —</option>
+        <option value="negative">Negative</option>
+        <option value="low">Low</option>
+        <option value="high">High</option>
+        <option value="peak">Peak (positive)</option>
+      </select>
+    </div>
+
+    <!-- Period toggle -->
+    <div class="toggle-row">
+      <span class="toggle-label">Period started today?</span>
+      <label class="toggle">
+        <input type="checkbox" id="logPeriod" onchange="toggleFlowIntensity()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- Flow intensity - only shown when period is toggled on -->
+    <div class="form-group hidden" id="flowGroup">
+      <label>Flow Intensity</label>
+      <select id="logFlow">
+        <option value="light">Light</option>
+        <option value="medium">Medium</option>
+        <option value="heavy">Heavy</option>
+      </select>
+    </div>
+
+    <!-- Pregnancy test -->
+    <div class="form-group">
+      <label>Pregnancy Test</label>
+      <select id="logPregnancyTest">
+        <option value="">— Not taken —</option>
+        <option value="positive">Positive</option>
+        <option value="negative">Negative</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <textarea id="logNotes" placeholder="Any symptoms, observations..."></textarea>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
+
+    <!-- Show existing entry for selected date if any -->
+    <div class="mt-12 hidden" id="existingEntryNote">
+      <p class="text-grey" style="font-size:12px;">⚠ An entry already exists for this date. Saving will update it.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: BBT CHART
+     ============================================================ -->
+<div class="page" id="pageChart">
+  <div class="cycle-selector">
+    <button onclick="chartPrevCycle()">◀</button>
+    <span id="chartCycleLabel">Current Cycle</span>
+    <button onclick="chartNextCycle()">▶</button>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="bbtChart" height="280"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="chart-legend">
+      <span class="chart-legend-item"><span class="chart-legend-dot" style="background:var(--navy)"></span> BBT</span>
+      <span class="chart-legend-item"><span class="chart-legend-dot" style="background:var(--green)"></span> Fertile Window</span>
+      <span class="chart-legend-item"><span class="chart-legend-dot" style="background:var(--coral)"></span> Coverline</span>
+      <span class="chart-legend-item"><span class="chart-legend-dot" style="background:var(--yellow)"></span> OPK Peak</span>
+    </div>
+  </div>
+
+  <div class="card" id="chartStats">
+    <div class="card-title">Cycle Stats</div>
+    <div id="chartStatsContent">
+      <p class="text-grey" style="font-size:13px;">No data for this cycle yet.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: CYCLE HISTORY
+     ============================================================ -->
+<div class="page" id="pageHistory">
+  <div class="card">
+    <div class="flex-between mb-8">
+      <div class="card-title" style="margin-bottom:0">Cycle History</div>
+      <span class="text-grey" style="font-size:12px" id="historyAvgLength">—</span>
+    </div>
+    <div id="historyList">
+      <div class="empty-state">
+        <p>No completed cycles yet.<br>Keep tracking to build your history.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cycle Statistics</div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Average Length</span>
+      <span class="dash-stat-value" id="statsAvgLength">—</span>
+    </div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Shortest / Longest</span>
+      <span class="dash-stat-value" id="statsRange">—</span>
+    </div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Avg Luteal Phase</span>
+      <span class="dash-stat-value" id="statsLuteal">—</span>
+    </div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Regularity</span>
+      <span class="dash-stat-value" id="statsRegularity">—</span>
+    </div>
+    <div class="dash-stat">
+      <span class="dash-stat-label">Cycles Tracked</span>
+      <span class="dash-stat-value" id="statsCycleCount">0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: SETTINGS
+     ============================================================ -->
+<div class="page" id="pageSettings">
+  <!-- General settings -->
+  <div class="card">
+    <div class="card-title">General Settings</div>
+    <div class="form-group">
+      <label>Temperature Unit</label>
+      <select id="settingsTempUnit" onchange="saveSetting('tempUnit', this.value)">
+        <option value="F">°F (Fahrenheit)</option>
+        <option value="C">°C (Celsius)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Typical Cycle Length (days)</label>
+      <input type="number" id="settingsCycleLength" min="18" max="60" onchange="saveSetting('typicalCycleLength', this.value)">
+    </div>
+    <div class="form-group">
+      <label>Cycle Regularity</label>
+      <select id="settingsRegularity" onchange="saveSetting('regularity', this.value)">
+        <option value="regular">Regular</option>
+        <option value="somewhat">Somewhat Irregular</option>
+        <option value="irregular">Irregular</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Historical periods -->
+  <div class="card">
+    <div class="card-title">Historical Period Dates</div>
+    <p class="text-grey mb-8" style="font-size:12px;">Add past period start dates to improve predictions. More data = better accuracy.</p>
+    <div class="form-group">
+      <label>Period Start Date</label>
+      <div style="display:flex;gap:8px">
+        <input type="date" id="histPeriodDate" style="flex:1">
+        <button class="btn btn-primary btn-small" onclick="addHistoricalPeriod()">Add</button>
+      </div>
+    </div>
+    <div class="historical-list" id="histPeriodList"></div>
+  </div>
+
+  <!-- Historical pregnancy events -->
+  <div class="card">
+    <div class="card-title">Pregnancy History</div>
+    <p class="text-grey mb-8" style="font-size:12px;">Past pregnancy events are excluded from cycle averages to keep predictions accurate.</p>
+    <div class="form-group">
+      <label>Event Date</label>
+      <input type="date" id="histPregnancyDate">
+    </div>
+    <div class="form-group">
+      <label>Event Type</label>
+      <select id="histPregnancyType">
+        <option value="miscarriage">Miscarriage</option>
+        <option value="abortion">Abortion</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary btn-small" onclick="addHistoricalPregnancy()">Add Event</button>
+    </div>
+    <div class="historical-list" id="histPregnancyList"></div>
+  </div>
+
+  <!-- Data management -->
+  <div class="card">
+    <div class="card-title">Data Management</div>
+    <button class="btn btn-secondary btn-small mb-8" onclick="exportData()">Export Data (JSON)</button>
+    <button class="btn btn-secondary btn-small mb-8" onclick="document.getElementById('importInput').click()">Import Data</button>
+    <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn btn-danger btn-small" onclick="clearAllData()">Clear All Data</button>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     BOTTOM NAVIGATION BAR
+     ============================================================ -->
+<nav class="nav">
+  <button class="nav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </button>
+  <button class="nav-btn" data-page="log" onclick="navigateTo('log')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    Log
+  </button>
+  <button class="nav-btn" data-page="chart" onclick="navigateTo('chart')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Chart
+  </button>
+  <button class="nav-btn" data-page="history" onclick="navigateTo('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    History
+  </button>
+  <button class="nav-btn" data-page="settings" onclick="navigateTo('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</nav>
+
+<script>
+// ============================================================
+// JAVASCRIPT - All app logic in one place
+// ============================================================
+
+// ---- DATA LAYER ----
+// All data is stored in localStorage as JSON.
+// localStorage is built into every browser and persists
+// even when you close the app. Data stays on YOUR device only.
+
+// Default data structure for a brand new user
+const DEFAULT_DATA = {
+  settings: {
+    tempUnit: 'F',              // 'F' or 'C'
+    typicalCycleLength: 28,     // user's typical cycle length in days
+    regularity: 'regular',      // 'regular', 'somewhat', or 'irregular'
+    onboardingComplete: false   // has the user done initial setup?
+  },
+  cycles: [],                   // array of cycle objects
+  pregnancyEvents: [],          // historical pregnancy outcomes
+  historicalPeriods: []          // manually entered past period dates
+};
+
+// Load data from localStorage, or use defaults if first time
+function loadData() {
+  try {
+    const stored = localStorage.getItem('fertilityData');
+    if (stored) {
+      const data = JSON.parse(stored);
+      // Merge with defaults to handle any new fields added in updates
+      return {
+        settings: { ...DEFAULT_DATA.settings, ...data.settings },
+        cycles: data.cycles || [],
+        pregnancyEvents: data.pregnancyEvents || [],
+        historicalPeriods: data.historicalPeriods || []
+      };
+    }
+  } catch (e) {
+    console.error('Error loading data:', e);
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+
+// Save data to localStorage
+function saveData() {
+  localStorage.setItem('fertilityData', JSON.stringify(appData));
+}
+
+// Global app data object - everything lives here
+let appData = loadData();
+
+// Which cycle index the chart is currently viewing
+let chartCycleIndex = -1; // -1 means "current cycle"
+
+// ---- UTILITY FUNCTIONS ----
+
+// Format a date string (YYYY-MM-DD) into a readable format
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatDateFull(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Get today's date as YYYY-MM-DD string
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// Calculate days between two date strings
+function daysBetween(dateStr1, dateStr2) {
+  const d1 = new Date(dateStr1 + 'T00:00:00');
+  const d2 = new Date(dateStr2 + 'T00:00:00');
+  return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+}
+
+// Add days to a date string, return new YYYY-MM-DD
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+// Convert temperature between F and C
+function toFahrenheit(c) { return (c * 9/5) + 32; }
+function toCelsius(f) { return (f - 32) * 5/9; }
+
+// Show a toast notification (brief popup message at bottom)
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ---- NAVIGATION ----
+// Simple SPA (single page app) navigation by showing/hiding divs
+
+function navigateTo(page) {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Show target page
+  const target = document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1));
+  if (target) target.classList.add('active');
+
+  // Update nav button highlighting
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const navBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+  if (navBtn) navBtn.classList.add('active');
+
+  // Refresh the page content
+  if (page === 'dashboard') refreshDashboard();
+  if (page === 'log') refreshLogPage();
+  if (page === 'chart') refreshChart();
+  if (page === 'history') refreshHistory();
+  if (page === 'settings') refreshSettings();
+}
+
+// ---- ONBOARDING ----
+// First-time setup flow
+
+function completeOnboarding() {
+  const lastPeriod = document.getElementById('onboardLastPeriod').value;
+  const cycleLength = parseInt(document.getElementById('onboardCycleLength').value) || 28;
+  const regularity = document.getElementById('onboardRegularity').value;
+  const tempUnit = document.getElementById('onboardTempUnit').value;
+
+  if (!lastPeriod) {
+    showToast('Please enter your last period date');
+    return;
+  }
+
+  // Save settings
+  appData.settings.typicalCycleLength = cycleLength;
+  appData.settings.regularity = regularity;
+  appData.settings.tempUnit = tempUnit;
+  appData.settings.onboardingComplete = true;
+
+  // Create the first cycle starting from the last period date
+  appData.cycles.push({
+    startDate: lastPeriod,
+    endDate: null,         // still ongoing
+    entries: [],
+    ovulationDay: null,    // not yet detected
+    length: null,          // not yet known
+    type: 'normal'
+  });
+
+  saveData();
+  document.getElementById('onboarding').classList.add('hidden');
+  navigateTo('dashboard');
+}
+
+// ---- CYCLE MANAGEMENT ----
+
+// Get the current (most recent) cycle, or null if none
+function getCurrentCycle() {
+  if (appData.cycles.length === 0) return null;
+  return appData.cycles[appData.cycles.length - 1];
+}
+
+// Check if we're in pregnancy mode
+function isPregnancyMode() {
+  const cycle = getCurrentCycle();
+  return cycle && cycle.type === 'pregnancy';
+}
+
+// Start a new cycle when a period is logged
+function startNewCycle(periodDate) {
+  const current = getCurrentCycle();
+
+  if (current && !current.endDate) {
+    // Close out the current cycle
+    current.endDate = addDays(periodDate, -1);
+    current.length = daysBetween(current.startDate, periodDate);
+  }
+
+  // Determine cycle type (recovery if within 3 cycles of pregnancy event)
+  let type = 'normal';
+  const recentEvents = appData.pregnancyEvents.filter(e => {
+    const cyclesSince = appData.cycles.filter(c =>
+      c.startDate > e.date && c.type === 'normal'
+    ).length;
+    return cyclesSince < 3;
+  });
+  if (recentEvents.length > 0) {
+    type = 'recovery';
+  }
+
+  appData.cycles.push({
+    startDate: periodDate,
+    endDate: null,
+    entries: [],
+    ovulationDay: null,
+    length: null,
+    type: type
+  });
+
+  saveData();
+}
+
+// Enter pregnancy mode
+function enterPregnancyMode(date) {
+  const cycle = getCurrentCycle();
+  if (cycle) {
+    cycle.type = 'pregnancy';
+    saveData();
+  }
+}
+
+// Log pregnancy outcome (miscarriage or abortion)
+function logPregnancyOutcome(type) {
+  if (!confirm(`Are you sure you want to log a ${type}? This will end pregnancy tracking mode.`)) {
+    return;
+  }
+
+  const today = todayStr();
+  const cycle = getCurrentCycle();
+
+  // Record the pregnancy event
+  appData.pregnancyEvents.push({
+    date: today,
+    type: type,
+    notes: ''
+  });
+
+  // Close current cycle with the outcome type
+  if (cycle) {
+    cycle.endDate = today;
+    cycle.type = type;
+    cycle.length = daysBetween(cycle.startDate, today);
+  }
+
+  saveData();
+  showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} recorded. Watching for next period.`);
+  refreshDashboard();
+}
+
+// ---- PREDICTION ENGINE ----
+// This is the core science logic of the app
+
+// Get all qualifying cycle lengths for averaging
+// Excludes pregnancy/miscarriage/abortion cycles
+// Recovery cycles get 50% weight
+function getQualifyingCycleLengths() {
+  const lengths = [];
+  const weights = [];
+
+  // Include completed cycles
+  const completed = appData.cycles.filter(c => c.length && c.length >= 18 && c.length <= 60);
+
+  for (const c of completed) {
+    if (c.type === 'pregnancy' || c.type === 'miscarriage' || c.type === 'abortion') {
+      continue; // skip pregnancy-related cycles entirely
+    }
+    lengths.push(c.length);
+    // Recovery cycles get half weight, normal get full weight
+    weights.push(c.type === 'recovery' ? 0.5 : 1.0);
+  }
+
+  // Also include historical periods (calculated as gaps between dates)
+  const histDates = [...appData.historicalPeriods].sort();
+  for (let i = 1; i < histDates.length; i++) {
+    const len = daysBetween(histDates[i-1], histDates[i]);
+    if (len >= 18 && len <= 60) {
+      lengths.push(len);
+      weights.push(0.8); // slightly less weight since they're historical
+    }
+  }
+
+  // If we also have the gap between last historical and first tracked cycle
+  if (histDates.length > 0 && appData.cycles.length > 0) {
+    const gap = daysBetween(histDates[histDates.length - 1], appData.cycles[0].startDate);
+    if (gap >= 18 && gap <= 60) {
+      lengths.push(gap);
+      weights.push(0.8);
+    }
+  }
+
+  return { lengths, weights };
+}
+
+// Weighted average calculation
+function weightedAverage(values, weights) {
+  if (values.length === 0) return null;
+  let sum = 0, wSum = 0;
+
+  // More recent cycles get higher weight (exponential decay)
+  for (let i = 0; i < values.length; i++) {
+    // recency factor: most recent = highest weight
+    const recency = 1 + (i / values.length) * 0.5;
+    const w = weights[i] * recency;
+    sum += values[i] * w;
+    wSum += w;
+  }
+  return Math.round(sum / wSum);
+}
+
+// Determine cycle regularity from data
+function calculateRegularity() {
+  const { lengths } = getQualifyingCycleLengths();
+  if (lengths.length < 3) return appData.settings.regularity; // not enough data, use user setting
+
+  const min = Math.min(...lengths);
+  const max = Math.max(...lengths);
+  const range = max - min;
+
+  // Standard deviation
+  const avg = lengths.reduce((a,b) => a+b, 0) / lengths.length;
+  const variance = lengths.reduce((sum, l) => sum + Math.pow(l - avg, 2), 0) / lengths.length;
+  const stdDev = Math.sqrt(variance);
+
+  if (range <= 4 && stdDev <= 2) return 'regular';
+  if (range <= 7 && stdDev <= 4) return 'somewhat';
+  return 'irregular';
+}
+
+// BBT Thermal Shift Detection
+// Uses the "3 over 6" rule: ovulation is confirmed when 3 consecutive
+// temperatures are at least 0.2°F above the highest of the previous 6 temps
+function detectThermalShift(entries) {
+  // Get entries with BBT data, sorted by date
+  const bbtEntries = entries
+    .filter(e => e.bbt !== null && e.bbt !== undefined && e.bbt !== '')
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (bbtEntries.length < 9) return null; // need at least 6 + 3
+
+  // Normalize all temps to Fahrenheit for calculation
+  const temps = bbtEntries.map(e => {
+    let t = parseFloat(e.bbt);
+    if (appData.settings.tempUnit === 'C') t = toFahrenheit(t);
+    return { date: e.date, temp: t };
+  });
+
+  // Standard "3 over 6" rule
+  for (let i = 6; i <= temps.length - 3; i++) {
+    // The 6 temps before position i
+    const prev6 = temps.slice(i - 6, i).map(t => t.temp);
+    const coverline = Math.max(...prev6);
+
+    // Check if the next 3 temps are all above coverline + 0.2°F
+    const next3 = [temps[i], temps[i+1], temps[i+2]];
+    const allAbove = next3.every(t => t.temp >= coverline + 0.2);
+
+    if (allAbove) {
+      return {
+        ovulationDate: temps[i - 1].date, // ovulation likely the day before the shift
+        coverline: coverline,
+        shiftDay: i,
+        method: 'standard'
+      };
+    }
+  }
+
+  // Slow rise pattern check (for irregular cycles)
+  // Look for gradual increase of 0.1°F+ over 4 consecutive days
+  // that eventually rises 0.3°F above the baseline
+  if (appData.settings.regularity !== 'regular') {
+    for (let i = 6; i <= temps.length - 4; i++) {
+      const baseline = temps.slice(i - 6, i).map(t => t.temp);
+      const baselineAvg = baseline.reduce((a,b) => a+b, 0) / baseline.length;
+
+      const next4 = [temps[i], temps[i+1], temps[i+2], temps[i+3]];
+      let rising = true;
+      for (let j = 1; j < next4.length; j++) {
+        if (next4[j].temp < next4[j-1].temp) { rising = false; break; }
+      }
+
+      if (rising && next4[3].temp >= baselineAvg + 0.3) {
+        return {
+          ovulationDate: temps[i - 1].date,
+          coverline: Math.max(...baseline),
+          shiftDay: i,
+          method: 'slow-rise'
+        };
+      }
+    }
+  }
+
+  return null; // no shift detected
+}
+
+// Find OPK Peak in entries
+function findOPKPeak(entries) {
+  const peaks = entries
+    .filter(e => e.opk === 'peak')
+    .sort((a, b) => a.date.localeCompare(b.date));
+  return peaks.length > 0 ? peaks[0] : null; // first peak in cycle
+}
+
+// Calculate predictions for a cycle
+function calculatePredictions(cycle) {
+  if (!cycle) return null;
+
+  const { lengths, weights } = getQualifyingCycleLengths();
+  const avgCycleLength = weightedAverage(lengths, weights) || appData.settings.typicalCycleLength;
+  const regularity = calculateRegularity();
+
+  // Min/max cycle lengths for irregular prediction ranges
+  const minCycleLen = lengths.length >= 3 ? Math.min(...lengths) : avgCycleLength - 4;
+  const maxCycleLen = lengths.length >= 3 ? Math.max(...lengths) : avgCycleLength + 4;
+
+  const cycleDay = daysBetween(cycle.startDate, todayStr()) + 1;
+
+  // Check for BBT thermal shift
+  const thermalShift = detectThermalShift(cycle.entries || []);
+  const opkPeak = findOPKPeak(cycle.entries || []);
+
+  // Determine ovulation day
+  let ovulationDate = null;
+  let ovulationConfidence = 'low';
+  let ovulationRange = null;
+
+  if (thermalShift) {
+    ovulationDate = thermalShift.ovulationDate;
+    ovulationConfidence = opkPeak ? 'high' : 'medium';
+    cycle.ovulationDay = daysBetween(cycle.startDate, ovulationDate) + 1;
+  } else if (opkPeak) {
+    // OPK peak: ovulation expected within 12-36 hours
+    ovulationDate = addDays(opkPeak.date, 1);
+    ovulationConfidence = 'medium';
+  } else {
+    // Calendar-based prediction
+    if (regularity === 'irregular') {
+      // For irregular: give a range
+      const earliestOvDay = minCycleLen - 16; // could be as early as shortest - 16
+      const latestOvDay = maxCycleLen - 12;   // could be as late as longest - 12
+      ovulationRange = {
+        earliest: addDays(cycle.startDate, Math.max(earliestOvDay, 8) - 1),
+        latest: addDays(cycle.startDate, latestOvDay - 1)
+      };
+      // Use midpoint for single-date prediction
+      ovulationDate = addDays(cycle.startDate, Math.round((earliestOvDay + latestOvDay) / 2) - 1);
+      ovulationConfidence = 'low';
+    } else {
+      // Regular: ovulation ~14 days before expected period end
+      const predictedOvDay = avgCycleLength - 14;
+      ovulationDate = addDays(cycle.startDate, predictedOvDay - 1);
+      ovulationConfidence = lengths.length >= 3 ? 'medium' : 'low';
+    }
+  }
+
+  // Fertility window
+  let fertilityStart, fertilityEnd;
+  if (thermalShift) {
+    // Retrospective: we know when ovulation was
+    fertilityStart = addDays(ovulationDate, -5);
+    fertilityEnd = addDays(ovulationDate, 1);
+  } else if (opkPeak) {
+    fertilityStart = addDays(opkPeak.date, -4);
+    fertilityEnd = addDays(opkPeak.date, 2);
+  } else if (ovulationRange) {
+    // Wide window for irregular cycles
+    fertilityStart = addDays(ovulationRange.earliest, -5);
+    fertilityEnd = addDays(ovulationRange.latest, 1);
+  } else {
+    fertilityStart = addDays(ovulationDate, -5);
+    fertilityEnd = addDays(ovulationDate, 1);
+  }
+
+  // Calculate average luteal phase from past cycles with confirmed ovulation
+  let avgLutealPhase = 14; // default
+  const luteals = appData.cycles
+    .filter(c => c.ovulationDay && c.length && c.type === 'normal')
+    .map(c => c.length - c.ovulationDay);
+  if (luteals.length >= 2) {
+    avgLutealPhase = Math.round(luteals.reduce((a,b) => a+b, 0) / luteals.length);
+  }
+
+  // Next period prediction
+  let nextPeriodDate, nextPeriodRange;
+  if (thermalShift) {
+    nextPeriodDate = addDays(ovulationDate, avgLutealPhase);
+  } else {
+    nextPeriodDate = addDays(cycle.startDate, avgCycleLength - 1);
+    if (regularity === 'irregular') {
+      nextPeriodRange = {
+        earliest: addDays(cycle.startDate, minCycleLen - 1),
+        latest: addDays(cycle.startDate, maxCycleLen - 1)
+      };
+    }
+  }
+
+  // Check for post-pregnancy timing
+  const recentPregEvent = appData.pregnancyEvents
+    .filter(e => daysBetween(e.date, todayStr()) <= 56) // within 8 weeks
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+
+  if (recentPregEvent && !cycle.endDate) {
+    const weeksOut = recentPregEvent.type === 'miscarriage' ? 6 : 8;
+    nextPeriodRange = {
+      earliest: addDays(recentPregEvent.date, 28),
+      latest: addDays(recentPregEvent.date, weeksOut * 7)
+    };
+    nextPeriodDate = addDays(recentPregEvent.date, Math.round(weeksOut * 7 * 0.7));
+  }
+
+  // Current phase
+  let phase = 'follicular';
+  const today = todayStr();
+  // Check if in menstrual phase (first ~5 days typically)
+  const recentPeriodEntries = (cycle.entries || []).filter(e => e.periodStart);
+  if (recentPeriodEntries.length > 0 && cycleDay <= 7) {
+    phase = 'menstrual';
+  } else if (thermalShift && today > thermalShift.ovulationDate) {
+    phase = 'luteal';
+  } else if (ovulationDate && today >= addDays(ovulationDate, -1) && today <= addDays(ovulationDate, 1)) {
+    phase = 'ovulation';
+  }
+
+  // Is today in the fertility window?
+  const inFertileWindow = today >= fertilityStart && today <= fertilityEnd;
+
+  return {
+    cycleDay,
+    phase,
+    ovulationDate,
+    ovulationRange,
+    ovulationConfidence,
+    fertilityStart,
+    fertilityEnd,
+    inFertileWindow,
+    nextPeriodDate,
+    nextPeriodRange,
+    avgCycleLength,
+    avgLutealPhase,
+    regularity,
+    thermalShift,
+    cycleCount: lengths.length
+  };
+}
+
+
+// ---- LOG ENTRY PAGE ----
+
+function refreshLogPage() {
+  const dateInput = document.getElementById('logDate');
+  if (!dateInput.value) {
+    dateInput.value = todayStr();
+  }
+
+  // Update temp unit label
+  document.getElementById('logTempUnitLabel').textContent =
+    '°' + appData.settings.tempUnit;
+
+  // Check if entry exists for this date
+  checkExistingEntry();
+
+  // Listen for date changes to check for existing entries
+  dateInput.onchange = checkExistingEntry;
+}
+
+function checkExistingEntry() {
+  const date = document.getElementById('logDate').value;
+  const cycle = getCurrentCycle();
+  if (!cycle) return;
+
+  const existing = (cycle.entries || []).find(e => e.date === date);
+  const note = document.getElementById('existingEntryNote');
+
+  if (existing) {
+    note.classList.remove('hidden');
+    // Pre-fill the form with existing data
+    document.getElementById('logBBT').value = existing.bbt || '';
+    document.getElementById('logOPK').value = existing.opk || '';
+    document.getElementById('logPeriod').checked = existing.periodStart || false;
+    toggleFlowIntensity();
+    if (existing.flowIntensity) {
+      document.getElementById('logFlow').value = existing.flowIntensity;
+    }
+    document.getElementById('logPregnancyTest').value = existing.pregnancyTest || '';
+    document.getElementById('logNotes').value = existing.notes || '';
+  } else {
+    note.classList.add('hidden');
+    // Clear form (except date)
+    document.getElementById('logBBT').value = '';
+    document.getElementById('logOPK').value = '';
+    document.getElementById('logPeriod').checked = false;
+    toggleFlowIntensity();
+    document.getElementById('logPregnancyTest').value = '';
+    document.getElementById('logNotes').value = '';
+  }
+}
+
+function toggleFlowIntensity() {
+  const periodOn = document.getElementById('logPeriod').checked;
+  document.getElementById('flowGroup').classList.toggle('hidden', !periodOn);
+}
+
+function saveEntry() {
+  const date = document.getElementById('logDate').value;
+  if (!date) { showToast('Please select a date'); return; }
+
+  const bbtRaw = document.getElementById('logBBT').value;
+  const bbt = bbtRaw ? parseFloat(bbtRaw) : null;
+  const opk = document.getElementById('logOPK').value || null;
+  const periodStart = document.getElementById('logPeriod').checked;
+  const flowIntensity = periodStart ? document.getElementById('logFlow').value : null;
+  const pregnancyTest = document.getElementById('logPregnancyTest').value || null;
+  const notes = document.getElementById('logNotes').value.trim() || null;
+
+  // Validate BBT range
+  if (bbt !== null) {
+    const minTemp = appData.settings.tempUnit === 'C' ? 35.5 : 96.0;
+    const maxTemp = appData.settings.tempUnit === 'C' ? 37.8 : 99.5;
+    if (bbt < minTemp || bbt > maxTemp) {
+      showToast(`Temperature should be between ${minTemp} and ${maxTemp}°${appData.settings.tempUnit}`);
+      return;
+    }
+  }
+
+  let cycle = getCurrentCycle();
+
+  // If period started, we might need to start a new cycle
+  if (periodStart && cycle) {
+    const cycleDay = daysBetween(cycle.startDate, date) + 1;
+    // If this is more than 10 days into the cycle, it's a new period/new cycle
+    if (cycleDay > 10) {
+      startNewCycle(date);
+      cycle = getCurrentCycle();
+    }
+  }
+
+  if (!cycle) {
+    // No cycle exists yet, create one
+    appData.cycles.push({
+      startDate: date,
+      endDate: null,
+      entries: [],
+      ovulationDay: null,
+      length: null,
+      type: 'normal'
+    });
+    cycle = getCurrentCycle();
+  }
+
+  // Build the entry object
+  const entry = { date, bbt, opk, periodStart, flowIntensity, pregnancyTest, notes };
+
+  // Check if entry exists for this date, update or add
+  const existingIdx = (cycle.entries || []).findIndex(e => e.date === date);
+  if (existingIdx >= 0) {
+    cycle.entries[existingIdx] = entry;
+  } else {
+    if (!cycle.entries) cycle.entries = [];
+    cycle.entries.push(entry);
+  }
+
+  // Sort entries by date
+  cycle.entries.sort((a, b) => a.date.localeCompare(b.date));
+
+  // Handle pregnancy test positive
+  if (pregnancyTest === 'positive') {
+    enterPregnancyMode(date);
+    showToast('Pregnancy recorded. Predictions paused.');
+  }
+
+  // Re-run thermal shift detection
+  const shift = detectThermalShift(cycle.entries);
+  if (shift) {
+    cycle.ovulationDay = daysBetween(cycle.startDate, shift.ovulationDate) + 1;
+  }
+
+  saveData();
+  showToast('Entry saved!');
+
+  // If we're still on log page, check for the existing entry note
+  checkExistingEntry();
+}
+
+
+// ---- DASHBOARD ----
+
+function refreshDashboard() {
+  const cycle = getCurrentCycle();
+
+  if (!cycle) {
+    document.getElementById('dashCycleDay').textContent = '—';
+    return;
+  }
+
+  // Pregnancy mode
+  const pregBanner = document.getElementById('pregnancyBanner');
+  if (isPregnancyMode()) {
+    pregBanner.classList.remove('hidden');
+    // Calculate weeks pregnant
+    const lastOv = cycle.ovulationDay
+      ? addDays(cycle.startDate, cycle.ovulationDay - 1)
+      : cycle.startDate;
+    const weeksPg = Math.floor(daysBetween(lastOv, todayStr()) / 7);
+    document.getElementById('pregnancyWeeks').textContent = `~${weeksPg} Weeks Pregnant`;
+    document.getElementById('pregnancyInfo').textContent =
+      'Ovulation and period predictions are paused during pregnancy.';
+
+    // Hide fertility banner
+    document.getElementById('fertilityBanner').classList.add('hidden');
+    document.getElementById('dashOvulation').textContent = 'Paused';
+    document.getElementById('dashFertility').textContent = 'Paused';
+    document.getElementById('dashNextPeriod').textContent = 'Paused';
+    document.getElementById('dashPhase').innerHTML =
+      '<span class="phase-badge phase-pregnant">Pregnant</span>';
+    document.getElementById('dashCycleDay').textContent =
+      daysBetween(cycle.startDate, todayStr()) + 1;
+    document.getElementById('dashRegularity').textContent = '—';
+    document.getElementById('dashConfidence').textContent = '';
+    refreshTodayEntry();
+    return;
+  } else {
+    pregBanner.classList.add('hidden');
+    document.getElementById('fertilityBanner').classList.remove('hidden');
+  }
+
+  const pred = calculatePredictions(cycle);
+  if (!pred) return;
+
+  // Cycle day
+  document.getElementById('dashCycleDay').textContent = 'Day ' + pred.cycleDay;
+
+  // Phase
+  const phaseMap = {
+    menstrual: { label: 'Menstrual', class: 'phase-menstrual' },
+    follicular: { label: 'Follicular', class: 'phase-follicular' },
+    ovulation: { label: 'Ovulation', class: 'phase-ovulation' },
+    luteal: { label: 'Luteal', class: 'phase-luteal' }
+  };
+  const phaseInfo = phaseMap[pred.phase] || phaseMap.follicular;
+  document.getElementById('dashPhase').innerHTML =
+    `<span class="phase-badge ${phaseInfo.class}">${phaseInfo.label}</span>`;
+
+  // Ovulation
+  if (pred.ovulationRange) {
+    document.getElementById('dashOvulation').textContent =
+      `${formatDate(pred.ovulationRange.earliest)} – ${formatDate(pred.ovulationRange.latest)}`;
+  } else {
+    document.getElementById('dashOvulation').textContent =
+      formatDate(pred.ovulationDate) + (pred.thermalShift ? ' ✓' : '');
+  }
+
+  // Fertility window
+  document.getElementById('dashFertility').textContent =
+    `${formatDate(pred.fertilityStart)} – ${formatDate(pred.fertilityEnd)}`;
+
+  // Fertility banner
+  const banner = document.getElementById('fertilityBanner');
+  if (pred.inFertileWindow) {
+    banner.classList.remove('inactive');
+    document.getElementById('fertilityBannerTitle').textContent = '🌟 Fertile Window';
+    document.getElementById('fertilityBannerText').textContent =
+      'You are currently in your estimated fertility window.';
+  } else {
+    const daysToFertile = daysBetween(todayStr(), pred.fertilityStart);
+    if (daysToFertile > 0 && daysToFertile <= 10) {
+      banner.classList.remove('inactive');
+      document.getElementById('fertilityBannerTitle').textContent = 'Fertility Window Approaching';
+      document.getElementById('fertilityBannerText').textContent =
+        `Estimated to start in ${daysToFertile} day${daysToFertile === 1 ? '' : 's'}`;
+    } else {
+      banner.classList.add('inactive');
+      document.getElementById('fertilityBannerTitle').textContent = 'Fertility Window';
+      document.getElementById('fertilityBannerText').textContent =
+        pred.thermalShift
+          ? 'Ovulation confirmed. Currently in luteal phase.'
+          : `Next window: ${formatDate(pred.fertilityStart)} – ${formatDate(pred.fertilityEnd)}`;
+    }
+  }
+
+  // Next period
+  if (pred.nextPeriodRange) {
+    document.getElementById('dashNextPeriod').textContent =
+      `${formatDate(pred.nextPeriodRange.earliest)} – ${formatDate(pred.nextPeriodRange.latest)}`;
+  } else {
+    document.getElementById('dashNextPeriod').textContent = formatDate(pred.nextPeriodDate);
+  }
+
+  // Regularity
+  const regLabels = { regular: 'Regular', somewhat: 'Somewhat Irregular', irregular: 'Irregular' };
+  document.getElementById('dashRegularity').textContent = regLabels[pred.regularity] || '—';
+
+  // Confidence note
+  let confNote = '';
+  if (pred.cycleCount < 3) {
+    confNote = `Based on ${pred.cycleCount} cycle${pred.cycleCount === 1 ? '' : 's'} of data. Predictions improve with more tracking.`;
+  } else if (pred.ovulationConfidence === 'high') {
+    confNote = 'High confidence: BBT shift + OPK Peak confirmed.';
+  } else if (pred.ovulationConfidence === 'medium') {
+    confNote = pred.thermalShift
+      ? 'BBT shift confirmed ovulation.'
+      : 'Based on OPK data. BBT confirmation pending.';
+  } else {
+    confNote = 'Calendar-based estimate. Log BBT and OPK for better accuracy.';
+  }
+  document.getElementById('dashConfidence').textContent = confNote;
+
+  refreshTodayEntry();
+}
+
+function refreshTodayEntry() {
+  const cycle = getCurrentCycle();
+  const container = document.getElementById('dashTodayEntry');
+  if (!cycle) return;
+
+  const entry = (cycle.entries || []).find(e => e.date === todayStr());
+  if (entry) {
+    let html = '<div style="font-size:13px;">';
+    if (entry.bbt) html += `<div>BBT: <strong>${entry.bbt}°${appData.settings.tempUnit}</strong></div>`;
+    if (entry.opk) html += `<div>OPK: <strong>${entry.opk}</strong></div>`;
+    if (entry.periodStart) html += `<div>Period: <strong>Yes${entry.flowIntensity ? ' ('+entry.flowIntensity+')' : ''}</strong></div>`;
+    if (entry.pregnancyTest) html += `<div>Pregnancy test: <strong>${entry.pregnancyTest}</strong></div>`;
+    if (entry.notes) html += `<div style="color:var(--grey);margin-top:4px;">${entry.notes}</div>`;
+    html += '</div>';
+    html += '<button class="btn btn-secondary btn-small mt-8" onclick="navigateTo(\'log\')">Edit Entry</button>';
+    container.innerHTML = html;
+  } else {
+    container.innerHTML = `
+      <p class="text-grey" style="font-size:13px;">No entry for today yet.</p>
+      <button class="btn btn-primary btn-small mt-8" onclick="navigateTo('log')">Log Today</button>
+    `;
+  }
+}
+
+
+// ---- BBT CHART ----
+
+function refreshChart() {
+  const cycles = appData.cycles;
+  if (cycles.length === 0) return;
+
+  // Determine which cycle to show
+  let cycleIdx;
+  if (chartCycleIndex === -1) {
+    cycleIdx = cycles.length - 1;
+  } else {
+    cycleIdx = Math.max(0, Math.min(chartCycleIndex, cycles.length - 1));
+  }
+
+  const cycle = cycles[cycleIdx];
+  const label = cycleIdx === cycles.length - 1
+    ? 'Current Cycle'
+    : `Cycle starting ${formatDate(cycle.startDate)}`;
+  document.getElementById('chartCycleLabel').textContent = label;
+
+  drawBBTChart(cycle);
+  drawChartStats(cycle);
+}
+
+function chartPrevCycle() {
+  const total = appData.cycles.length;
+  if (total <= 1) return;
+
+  if (chartCycleIndex === -1) {
+    chartCycleIndex = total - 2;
+  } else {
+    chartCycleIndex = Math.max(0, chartCycleIndex - 1);
+  }
+  refreshChart();
+}
+
+function chartNextCycle() {
+  const total = appData.cycles.length;
+  if (chartCycleIndex === -1) return; // already at current
+  chartCycleIndex++;
+  if (chartCycleIndex >= total - 1) {
+    chartCycleIndex = -1; // back to current
+  }
+  refreshChart();
+}
+
+function drawBBTChart(cycle) {
+  const canvas = document.getElementById('bbtChart');
+  const ctx = canvas.getContext('2d');
+
+  // Set canvas resolution for crisp rendering on high-DPI screens
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 280 * dpr;
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = 280;
+
+  // Clear canvas
+  ctx.clearRect(0, 0, W, H);
+
+  const entries = (cycle.entries || [])
+    .filter(e => e.bbt !== null && e.bbt !== undefined && e.bbt !== '')
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (entries.length === 0) {
+    ctx.fillStyle = '#A5ACAF';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No temperature data for this cycle.', W/2, H/2);
+    return;
+  }
+
+  // Convert to consistent unit (always plot in user's chosen unit)
+  const temps = entries.map(e => {
+    let t = parseFloat(e.bbt);
+    return t;
+  });
+
+  // Determine chart bounds
+  const padding = { top: 20, right: 20, bottom: 50, left: 45 };
+  const plotW = W - padding.left - padding.right;
+  const plotH = H - padding.top - padding.bottom;
+
+  const minTemp = Math.floor((Math.min(...temps) - 0.2) * 10) / 10;
+  const maxTemp = Math.ceil((Math.max(...temps) + 0.2) * 10) / 10;
+  const tempRange = maxTemp - minTemp || 1;
+
+  // Calculate the total days in this cycle for x-axis
+  const cycleDays = entries.map(e => daysBetween(cycle.startDate, e.date) + 1);
+  const maxDay = Math.max(...cycleDays, 28);
+
+  function xPos(day) { return padding.left + ((day - 1) / (maxDay - 1)) * plotW; }
+  function yPos(temp) { return padding.top + (1 - (temp - minTemp) / tempRange) * plotH; }
+
+  // Draw grid lines
+  ctx.strokeStyle = '#E8EAEB';
+  ctx.lineWidth = 1;
+  const tempStep = appData.settings.tempUnit === 'C' ? 0.1 : 0.2;
+  for (let t = minTemp; t <= maxTemp; t += tempStep) {
+    const y = yPos(t);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(W - padding.right, y);
+    ctx.stroke();
+
+    // Temperature labels
+    ctx.fillStyle = '#A5ACAF';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(t.toFixed(1), padding.left - 5, y + 3);
+  }
+
+  // Get prediction data for shading
+  const pred = calculatePredictions(cycle);
+
+  // Draw fertility window shading
+  if (pred) {
+    const fStartDay = daysBetween(cycle.startDate, pred.fertilityStart) + 1;
+    const fEndDay = daysBetween(cycle.startDate, pred.fertilityEnd) + 1;
+    if (fEndDay >= 1 && fStartDay <= maxDay) {
+      ctx.fillStyle = 'rgba(105, 190, 40, 0.12)';
+      const x1 = xPos(Math.max(fStartDay, 1));
+      const x2 = xPos(Math.min(fEndDay, maxDay));
+      ctx.fillRect(x1, padding.top, x2 - x1, plotH);
+    }
+  }
+
+  // Draw coverline if thermal shift detected
+  const shift = detectThermalShift(cycle.entries);
+  if (shift) {
+    let coverlineTemp = shift.coverline;
+    if (appData.settings.tempUnit === 'C') {
+      coverlineTemp = toCelsius(coverlineTemp);
+    }
+    const y = yPos(coverlineTemp);
+    ctx.strokeStyle = '#E86B6B';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(W - padding.right, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw BBT line
+  ctx.strokeStyle = '#002244';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < entries.length; i++) {
+    const x = xPos(cycleDays[i]);
+    const y = yPos(temps[i]);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Draw data points
+  for (let i = 0; i < entries.length; i++) {
+    const x = xPos(cycleDays[i]);
+    const y = yPos(temps[i]);
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#002244';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Draw OPK indicators below chart
+  const allEntries = (cycle.entries || []).sort((a, b) => a.date.localeCompare(b.date));
+  const opkColors = { negative: '#A5ACAF', low: '#A5ACAF', high: '#F5A623', peak: '#69BE28' };
+  for (const e of allEntries) {
+    if (!e.opk) continue;
+    const day = daysBetween(cycle.startDate, e.date) + 1;
+    if (day < 1 || day > maxDay) continue;
+    const x = xPos(day);
+    const y = H - padding.bottom + 15;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = opkColors[e.opk] || '#A5ACAF';
+    ctx.fill();
+  }
+
+  // X-axis day labels
+  ctx.fillStyle = '#A5ACAF';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  const dayStep = maxDay > 35 ? 5 : maxDay > 20 ? 3 : 2;
+  for (let d = 1; d <= maxDay; d += dayStep) {
+    const x = xPos(d);
+    ctx.fillText(d.toString(), x, H - padding.bottom + 30);
+  }
+
+  // Axis label
+  ctx.fillStyle = '#A5ACAF';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Cycle Day', W/2, H - 5);
+}
+
+function drawChartStats(cycle) {
+  const container = document.getElementById('chartStatsContent');
+  const entries = cycle.entries || [];
+  const bbtEntries = entries.filter(e => e.bbt);
+
+  if (bbtEntries.length === 0) {
+    container.innerHTML = '<p class="text-grey" style="font-size:13px;">No data for this cycle yet.</p>';
+    return;
+  }
+
+  const shift = detectThermalShift(entries);
+  const opkPeak = findOPKPeak(entries);
+  const unit = '°' + appData.settings.tempUnit;
+
+  let html = '';
+  html += `<div class="dash-stat"><span class="dash-stat-label">Entries</span><span class="dash-stat-value">${entries.length}</span></div>`;
+  html += `<div class="dash-stat"><span class="dash-stat-label">BBT Range</span><span class="dash-stat-value">${Math.min(...bbtEntries.map(e=>parseFloat(e.bbt))).toFixed(2)} – ${Math.max(...bbtEntries.map(e=>parseFloat(e.bbt))).toFixed(2)}${unit}</span></div>`;
+
+  if (shift) {
+    html += `<div class="dash-stat"><span class="dash-stat-label">Ovulation (BBT)</span><span class="dash-stat-value">${formatDate(shift.ovulationDate)} ✓</span></div>`;
+    let clTemp = shift.coverline;
+    if (appData.settings.tempUnit === 'C') clTemp = toCelsius(clTemp);
+    html += `<div class="dash-stat"><span class="dash-stat-label">Coverline</span><span class="dash-stat-value">${clTemp.toFixed(2)}${unit}</span></div>`;
+    html += `<div class="dash-stat"><span class="dash-stat-label">Detection</span><span class="dash-stat-value">${shift.method === 'slow-rise' ? 'Slow Rise Pattern' : '3-over-6 Rule'}</span></div>`;
+  } else {
+    html += `<div class="dash-stat"><span class="dash-stat-label">Thermal Shift</span><span class="dash-stat-value text-grey">Not yet detected</span></div>`;
+  }
+
+  if (opkPeak) {
+    html += `<div class="dash-stat"><span class="dash-stat-label">OPK Peak</span><span class="dash-stat-value text-green">${formatDate(opkPeak.date)}</span></div>`;
+  }
+
+  if (cycle.type && cycle.type !== 'normal') {
+    html += `<div class="dash-stat"><span class="dash-stat-label">Cycle Type</span><span class="dash-stat-value">${cycle.type}</span></div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+
+// ---- CYCLE HISTORY ----
+
+function refreshHistory() {
+  const list = document.getElementById('historyList');
+  const completed = appData.cycles.filter(c => c.length);
+
+  if (completed.length === 0) {
+    list.innerHTML = '<div class="empty-state"><p>No completed cycles yet.<br>Keep tracking to build your history.</p></div>';
+  } else {
+    let html = '';
+    // Show most recent first
+    for (let i = completed.length - 1; i >= 0; i--) {
+      const c = completed[i];
+      const typeClass = 'type-' + (c.type || 'normal');
+      const typeLabel = c.type && c.type !== 'normal'
+        ? `<span class="cycle-item-type ${typeClass}">${c.type}</span>` : '';
+
+      html += `<div class="cycle-item">`;
+      html += `<div class="cycle-item-header">`;
+      html += `<span class="cycle-item-date">${formatDateFull(c.startDate)} ${typeLabel}</span>`;
+      html += `<span class="cycle-item-length">${c.length} days</span>`;
+      html += `</div>`;
+      html += `<div class="cycle-item-details">`;
+      html += c.ovulationDay ? `<span>Ovulation: Day ${c.ovulationDay}</span>` : '<span>Ovulation: —</span>';
+      if (c.ovulationDay && c.length) {
+        html += `<span>Luteal: ${c.length - c.ovulationDay} days</span>`;
+      }
+      html += `<span>Entries: ${(c.entries || []).length}</span>`;
+      html += `</div></div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  // Statistics
+  const { lengths } = getQualifyingCycleLengths();
+  if (lengths.length > 0) {
+    const avg = Math.round(lengths.reduce((a,b) => a+b,0) / lengths.length);
+    const min = Math.min(...lengths);
+    const max = Math.max(...lengths);
+
+    document.getElementById('historyAvgLength').textContent = `Avg: ${avg} days`;
+    document.getElementById('statsAvgLength').textContent = `${avg} days`;
+    document.getElementById('statsRange').textContent = `${min} / ${max} days`;
+    document.getElementById('statsCycleCount').textContent = lengths.length.toString();
+
+    const regularity = calculateRegularity();
+    const regLabels = { regular: 'Regular', somewhat: 'Somewhat Irregular', irregular: 'Irregular' };
+    document.getElementById('statsRegularity').textContent = regLabels[regularity] || '—';
+
+    // Average luteal phase
+    const luteals = appData.cycles
+      .filter(c => c.ovulationDay && c.length && c.type === 'normal')
+      .map(c => c.length - c.ovulationDay);
+    if (luteals.length > 0) {
+      const avgLut = Math.round(luteals.reduce((a,b) => a+b,0) / luteals.length);
+      document.getElementById('statsLuteal').textContent = `${avgLut} days`;
+    }
+  }
+}
+
+
+// ---- SETTINGS ----
+
+function refreshSettings() {
+  document.getElementById('settingsTempUnit').value = appData.settings.tempUnit;
+  document.getElementById('settingsCycleLength').value = appData.settings.typicalCycleLength;
+  document.getElementById('settingsRegularity').value = appData.settings.regularity;
+
+  // Historical periods list
+  renderHistoricalPeriods();
+  renderHistoricalPregnancies();
+}
+
+function saveSetting(key, value) {
+  if (key === 'typicalCycleLength') value = parseInt(value) || 28;
+  appData.settings[key] = value;
+  saveData();
+  showToast('Setting saved');
+}
+
+function addHistoricalPeriod() {
+  const dateInput = document.getElementById('histPeriodDate');
+  const date = dateInput.value;
+  if (!date) { showToast('Please select a date'); return; }
+
+  if (appData.historicalPeriods.includes(date)) {
+    showToast('This date already exists');
+    return;
+  }
+
+  appData.historicalPeriods.push(date);
+  appData.historicalPeriods.sort();
+  saveData();
+  dateInput.value = '';
+  renderHistoricalPeriods();
+  showToast('Period date added');
+}
+
+function removeHistoricalPeriod(date) {
+  appData.historicalPeriods = appData.historicalPeriods.filter(d => d !== date);
+  saveData();
+  renderHistoricalPeriods();
+  showToast('Removed');
+}
+
+function renderHistoricalPeriods() {
+  const list = document.getElementById('histPeriodList');
+  if (appData.historicalPeriods.length === 0) {
+    list.innerHTML = '<p class="text-grey" style="font-size:12px;padding:8px 0;">No historical periods added.</p>';
+    return;
+  }
+  let html = '';
+  for (const date of appData.historicalPeriods) {
+    html += `<div class="historical-item">
+      <span>${formatDateFull(date)}</span>
+      <button class="remove-btn" onclick="removeHistoricalPeriod('${date}')">✕</button>
+    </div>`;
+  }
+
+  // Show calculated cycle lengths
+  if (appData.historicalPeriods.length >= 2) {
+    html += '<div style="margin-top:8px;font-size:12px;color:var(--grey);">Calculated cycle lengths: ';
+    const sorted = [...appData.historicalPeriods].sort();
+    const gaps = [];
+    for (let i = 1; i < sorted.length; i++) {
+      gaps.push(daysBetween(sorted[i-1], sorted[i]));
+    }
+    html += gaps.join(', ') + ' days</div>';
+  }
+
+  list.innerHTML = html;
+}
+
+function addHistoricalPregnancy() {
+  const date = document.getElementById('histPregnancyDate').value;
+  const type = document.getElementById('histPregnancyType').value;
+  if (!date) { showToast('Please select a date'); return; }
+
+  appData.pregnancyEvents.push({ date, type, notes: '' });
+  appData.pregnancyEvents.sort((a,b) => a.date.localeCompare(b.date));
+  saveData();
+  document.getElementById('histPregnancyDate').value = '';
+  renderHistoricalPregnancies();
+  showToast('Pregnancy event added');
+}
+
+function removeHistoricalPregnancy(idx) {
+  appData.pregnancyEvents.splice(idx, 1);
+  saveData();
+  renderHistoricalPregnancies();
+  showToast('Removed');
+}
+
+function renderHistoricalPregnancies() {
+  const list = document.getElementById('histPregnancyList');
+  if (appData.pregnancyEvents.length === 0) {
+    list.innerHTML = '<p class="text-grey" style="font-size:12px;padding:8px 0;">No pregnancy events recorded.</p>';
+    return;
+  }
+  let html = '';
+  appData.pregnancyEvents.forEach((evt, idx) => {
+    html += `<div class="historical-item">
+      <span>${formatDateFull(evt.date)} — ${evt.type}</span>
+      <button class="remove-btn" onclick="removeHistoricalPregnancy(${idx})">✕</button>
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+
+// ---- DATA IMPORT/EXPORT ----
+
+function exportData() {
+  const json = JSON.stringify(appData, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fertility-data-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.settings && imported.cycles) {
+        appData = {
+          settings: { ...DEFAULT_DATA.settings, ...imported.settings },
+          cycles: imported.cycles || [],
+          pregnancyEvents: imported.pregnancyEvents || [],
+          historicalPeriods: imported.historicalPeriods || []
+        };
+        saveData();
+        showToast('Data imported successfully');
+        navigateTo('dashboard');
+      } else {
+        showToast('Invalid data file');
+      }
+    } catch (err) {
+      showToast('Error reading file');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // reset file input
+}
+
+function clearAllData() {
+  if (!confirm('This will delete ALL your fertility tracking data. This cannot be undone. Are you sure?')) return;
+  if (!confirm('Really sure? All data will be permanently lost.')) return;
+
+  localStorage.removeItem('fertilityData');
+  appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  saveData();
+  location.reload();
+}
+
+
+// ---- APP INITIALIZATION ----
+// This runs when the page first loads
+
+function init() {
+  // Check if onboarding is needed
+  if (!appData.settings.onboardingComplete) {
+    document.getElementById('onboarding').classList.remove('hidden');
+    // Set default date for onboarding
+    document.getElementById('onboardLastPeriod').value = todayStr();
+  } else {
+    document.getElementById('onboarding').classList.add('hidden');
+    navigateTo('dashboard');
+  }
+
+  // Set today's date on log page
+  document.getElementById('logDate').value = todayStr();
+}
+
+// Register the service worker for offline support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(err => {
+    console.log('Service worker registration failed:', err);
+  });
+}
+
+// Start the app!
+init();
+</script>
+</body>
+</html>
