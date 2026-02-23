@@ -7,13 +7,15 @@
 // without an internet connection.
 // ============================================================
 
-const CACHE_NAME = 'fertility-tracker-v1';
+const CACHE_NAME = 'fertility-tracker-v2';
 
 // List of files to cache when the app first loads
 const FILES_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 // INSTALL EVENT - runs once when the service worker is first registered
